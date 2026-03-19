@@ -5,80 +5,48 @@
 To perform and verify speech recognition using SCILAB. 
 
 ## APPARATUS REQUIRED: 
-PC installed with SCILAB. 
+Google Colab
 
 ## PROGRAM : 
 ```
-clc;
-clear;
-close;
 
-disp("🎤 Loading audio files...");
+!pip -q install SpeechRecognition pydub
+!apt-get -qq install ffmpeg
 
-// Read reference and test voice files
-[y1, fs1] = wavread("C:\Users\acer\Downloads\referance.wav");
-[y2, fs2] = wavread("C:\Users\acer\Downloads\test.wav");
+import speech_recognition as sr
+from google.colab import files
+from pydub import AudioSegment
 
-// Check sampling rates
-if fs1 <> fs2 then
-    error("❌ Sampling rates must match!");
-end
+print("📁 Upload audio file (MP3 or WAV)")
+uploaded = files.upload()
 
-// Convert stereo to mono (if needed)
-if size(y1,2) == 2 then
-    y1 = mean(y1, 2);
-end
-if size(y2,2) == 2 then
-    y2 = mean(y2, 2);
-end
+audio_file = list(uploaded.keys())[0]
 
-// Make both signals same length
-n = min(length(y1), length(y2));
-y1 = y1(1:n);
-y2 = y2(1:n);
+if audio_file.endswith(".mp3"):
+    print("🔄 Converting MP3 to WAV...")
+    sound = AudioSegment.from_mp3(audio_file)
+    audio_file = "converted.wav"
+    sound.export(audio_file, format="wav")
 
-// Compute Euclidean distance
-dist = sqrt(sum((y1 - y2).^2));
+recognizer = sr.Recognizer()
 
-disp("Euclidean distance (reference vs test): " + string(dist));
+with sr.AudioFile(audio_file) as source:
+    audio_data = recognizer.record(source)
 
-// Decision based on threshold
-if dist < 0.5 then
-    disp("✅ Matching with reference (same word)");
-else
-    disp("❌ Not matching with reference (different word)");
-end
+try:
+    text = recognizer.recognize_google(audio_data)
+    print("\n🎯 Converted Text:\n", text)
 
-// Plot both signals
-figure(0);
-subplot(2,1,1);
-plot(y1);
-title("REFERENCE VOICE SIGNAL");
-xlabel("Samples");
-ylabel("Amplitude");
+except sr.UnknownValueError:
+    print("\n❌ Could not understand audio")
 
-subplot(2,1,2);
-plot(y2);
-title("TEST VOICE SIGNAL");
-xlabel("Samples");
-ylabel("Amplitude");
-
-// Comparison plot
-figure(1);
-plot(y1, 'b');
-plot(y2, 'r');
-title("Reference (Blue) vs Test (Red) Signal");
-xlabel("Samples");
-ylabel("Amplitude");
-legend(["Reference", "Test"]);
-
-disp("✅ Waveforms plotted successfully.");
+except sr.RequestError:
+    print("\n❌ API error (Check internet)")
 ```
 
 ## OUTPUT: 
-<img width="1917" height="1198" alt="image" src="https://github.com/user-attachments/assets/8601c689-8318-4d0b-aa62-1b337ae5756f" />
 
-<img width="1918" height="1198" alt="image" src="https://github.com/user-attachments/assets/9dc4fd6e-085f-4b24-b570-391287de71c7" />
+<img width="500" height="600" alt="image" src="https://github.com/user-attachments/assets/937e8da0-fe18-46bf-ad7c-8bd2fee1bc59" />
 
 ## RESULT: 
-Thus the speech recognition using SCILAB was performed and verified.
+Thus the speech recognition was performed and verified.
